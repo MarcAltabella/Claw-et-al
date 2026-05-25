@@ -78,5 +78,5 @@ def user_login(user_credentials: schemas.UserLogin):
         }
     
     except Exception:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail=f"Couldn't verify with these credentials")

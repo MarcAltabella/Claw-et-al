@@ -14,4 +14,10 @@ class UserSignUp(User):
 class UserLogin(User):
     pass
 
+class UserResponse(BaseModel):
+    user_id: str
+    email: EmailStr
+
+    class Config:
+        orm_mode = True
 ###### DOCUMENTS INGESTION ######

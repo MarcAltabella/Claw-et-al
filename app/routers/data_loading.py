@@ -3,20 +3,23 @@ import os
 from uuid import uuid4
 from fastapi import HTTPException, status, Depends, APIRouter, UploadFile, File
 from sqlalchemy.orm import Session
-from .. import get_current_user
+from ..oauth2 import get_current_user
 from ..rag import pipeline
 from .. import models
 from ..database import get_db
 
 
-routers = APIRouter(
+router = APIRouter(
     tags=["documents"]
 )
 
-@routers.post("/documents/ingest", status_code=status.HTTP_200_OK)
+@router.post("/ingest", status_code=status.HTTP_200_OK)
 def ingest_documents(file: UploadFile = File(...), # this field is required (...), file path
                      db: Session = Depends(get_db), 
                      current_user = Depends(get_current_user)):
+
+
+    print(f"Received file: {file.filename}")
 
     # Add the document to the document table
     document = models.Document(
@@ -50,6 +53,10 @@ def ingest_documents(file: UploadFile = File(...), # this field is required (...
             )
         )
 
+    if chunk_rows is None:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                            detail="Error processing document chunks")
+
     db.add_all(chunk_rows)
 
     document.processed = True
@@ -61,6 +68,4 @@ def ingest_documents(file: UploadFile = File(...), # this field is required (...
         "file_name": document.filename,
         "chunks": len(chunk_rows)
     }
-
-    
 

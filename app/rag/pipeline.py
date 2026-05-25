@@ -1,6 +1,6 @@
 from langchain_openai import OpenAIEmbeddings
-from loader import load_pdf
-from split import splitter
+from .loader import load_pdf
+from .split import splitter
 import os
 from dotenv import load_dotenv
 from typing import List
