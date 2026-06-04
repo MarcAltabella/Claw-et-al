@@ -67,6 +67,7 @@ def user_login(user_credentials: schemas.UserLogin):
             }
         )
 
+        print("User token response:", response.session.access_token)
 
         return {
             "access_token": response.session.access_token,
@@ -76,7 +77,8 @@ def user_login(user_credentials: schemas.UserLogin):
                 "email": response.user.email
             }
         }
-    
+
+
     except Exception:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail=f"Couldn't verify with these credentials")

@@ -34,12 +34,16 @@ def ingest_documents(file: UploadFile = File(...), # this field is required (...
     db.commit()
     db.refresh(document)
 
-    loaded_docs = pipeline.load_files(file)
+    loaded_docs = pipeline.load_files(input_file=file)
     chunks = pipeline.chunk_files(loaded_docs)
-    vectors = pipeline.embedding(chunks)
+
+    vectors = []
+    for chunk in chunks:
+        vector = pipeline.embedding(chunk) # get the embedding for each chunk
+        vectors.append(vector) # list of vectors for each chunk
 
     chunk_rows = []
-    for i, (chunk) in enumerate(chunks):
+    for i, chunk in enumerate(chunks):
 
         chunk_rows.append(
             models.DocumentChunks(
@@ -56,6 +60,8 @@ def ingest_documents(file: UploadFile = File(...), # this field is required (...
     if chunk_rows is None:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                             detail="Error processing document chunks")
+
+    print(chunk_rows[0]) # debugging
 
     db.add_all(chunk_rows)
 

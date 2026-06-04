@@ -13,4 +13,4 @@ def splitter(docs: List[str]) -> List[str]:
     all_splits_list = text_splitter.split_documents(docs) # returns a list of split documents
     print(f"Split blog post into {len(all_splits_list)} sub-documents.")
     
-    return all_splits_list
+    return all_splits_list # return a list of split documents (chunks)
