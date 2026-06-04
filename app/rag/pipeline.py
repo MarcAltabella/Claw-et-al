@@ -54,7 +54,5 @@ def embedding(chunk: Document) -> List[float]:
     print(f"Chunk content: {text}") # debugging
 
     vector = embeddings.embed_query(text) # Crete the embeddings for each chunk
-    print(f"Vector dimensions: {len(vector)}")
-    print(type(vector))
     
     return vector # return the embedding for the chunk

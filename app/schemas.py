@@ -20,4 +20,7 @@ class UserResponse(BaseModel):
 
     class Config:
         orm_mode = True
-###### DOCUMENTS INGESTION ######
+
+class UserInput(BaseModel):
+    content: str
+

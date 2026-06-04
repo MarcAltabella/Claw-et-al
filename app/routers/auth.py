@@ -67,7 +67,8 @@ def user_login(user_credentials: schemas.UserLogin):
             }
         )
 
-        print("User token response:", response.session.access_token)
+        print("User token response:", response.session.access_token,
+              "\nExpires in:", response.session.expires_in)
 
         return {
             "access_token": response.session.access_token,

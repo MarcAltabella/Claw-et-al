@@ -41,6 +41,9 @@ def ingest_documents(file: UploadFile = File(...), # this field is required (...
     for chunk in chunks:
         vector = pipeline.embedding(chunk) # get the embedding for each chunk
         vectors.append(vector) # list of vectors for each chunk
+    
+    print(f"Vector dimensions: {len(vector)}")
+    print(type(vector))
 
     chunk_rows = []
     for i, chunk in enumerate(chunks):
@@ -53,7 +56,7 @@ def ingest_documents(file: UploadFile = File(...), # this field is required (...
                 content=chunk.page_content,
                 embedding=vectors[i],
                 raw_text=chunk.page_content,
-                metadata_={}
+                metadata_={"source": f"{document.filename}_chunk_{i}"}
             )
         )
 

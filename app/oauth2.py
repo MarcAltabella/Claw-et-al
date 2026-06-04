@@ -1,5 +1,6 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from supabase import AuthApiError
 from jose import jwt, JWTError
 from .supabase_client import supabase
 from .schemas import UserResponse
@@ -37,10 +38,10 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             email=email
             )
 
-    except JWTError:
+    except AuthApiError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token"
+            detail=f"Invalid token: {AuthApiError}"
         )
 
 
