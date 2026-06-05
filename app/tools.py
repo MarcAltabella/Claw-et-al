@@ -1,12 +1,29 @@
 from langchain.tools import tool
 from .schemas import UserInput
+from app.database import get_db
+from fastapi import Depends
+from . import models
+
+
+
 
 @tool(args_schema=UserInput)
-def find_information(prompt: str, user_id: str, query) -> str:
+def find_information(content: str) -> str:
 
     """
-    Search for information in the database matching the user_id based on a query.
+    Search for information in the database based on a user query.
     """
 
+    db = get_db()
 
-    return f"Found information for query: {prompt} and user_id: {user_id}"
+    try:
+
+        rows = db.query(models.Documents).filter(models.Documents.user_id == user_id).all()
+
+        if rows is None:
+            return "No information found for the user."
+        
+    finally:
+        db.close()
+    
+    return f"Found information for query: {content}"
