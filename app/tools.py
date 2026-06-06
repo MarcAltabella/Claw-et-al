@@ -34,19 +34,20 @@ def create_tools(user_id: str, db: Session):
     
 
     @tool
-    def internet_search(content: str,
-                        max_results: int = 5,
-                        include_raw_content: bool = False) -> str:
+    def internet_search(content: str, max_results: int = 5) -> str:
         
-        """Search the internet for relevant information according to the user's query."""
+        """Search the internet for relevant information according to the user's query. Return the reasoning process, sources (links), and final answer."""
 
-        search_results = tavily_client.search(query=content, 
-                                              num_results=max_results, 
-                                              include_raw_content=include_raw_content)
-        
+        search_results = tavily_client.search(
+            query=content,
+            max_results=max_results,
+            include_answer=True,
+            include_raw_content=False,
+            search_depth="basic",
+        )
         print(f"search_results: {search_results}") # debugging
 
-        return search_results.get("answer", str(search_results)) #return search_results["answer"] if it exists, otherwise return the whole search_results as a string for debugging
+        return search_results
 
     return [internet_search, find_information]
 

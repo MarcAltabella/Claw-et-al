@@ -1,6 +1,5 @@
 import supabase
-from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from pydantic import BaseModel, EmailStr, Field
 
 ###### USER SCHEMAS ######
 
@@ -24,3 +23,10 @@ class UserResponse(BaseModel):
 class UserInput(BaseModel):
     content: str
 
+
+###### MESSAGE SCHEMAS ######
+
+class AgentResponse(BaseModel):
+    response: str = Field(description="The agent's response to the user's query.")
+    reasoning: str = Field(description="The agent's reasoning process, including which tools were used and how the final answer was derived.")
+    sources: list[str] = Field(description="A list of sources or references used by the agent to generate the response, if applicable.")

@@ -25,7 +25,7 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
 
     if user_query is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     prompt = f"""
     Answer this user request: {user_input.content}
 
@@ -46,23 +46,12 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
         ]
     })
 
-    last_content = response["messages"][-1].content
+    structured_response = response["structured_response"] # pydantic model reply
 
-    print("last_content:", type(last_content), last_content)
+    response_message = structured_response.response
+    reasoning = structured_response.reasoning
+    sources = structured_response.sources
 
-    if isinstance(last_content, str):
-        response_message = last_content
-
-    elif isinstance(last_content, list):
-        text_blocks = [
-            block.get("text", "")
-            for block in last_content
-            if isinstance(block, dict) and block.get("type") == "text"
-        ]
-        response_message = "\n\n".join(text_blocks)
-
-    else:
-        response_message = str(last_content)
 
     message = models.Message(
         id = uuid4(),
@@ -70,10 +59,14 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
         content = response_message
     )
 
-    print(response_message) # debugging
+    print(f"Response message: {response_message}") # debugging
     
     db.add(message)
     db.commit()
     db.refresh(message)
 
-    return response_message
+    return {
+        "message": response_message,
+        "reasoning": reasoning,
+        "sources": sources
+    }
