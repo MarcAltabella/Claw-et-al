@@ -44,11 +44,11 @@ def create_tools(user_id: str, db: Session):
                                               num_results=max_results, 
                                               include_raw_content=include_raw_content)
         
-        print(search_results) # debugging
+        print(f"search_results: {search_results}") # debugging
 
-        return search_results["answer"]
+        return search_results.get("answer", str(search_results)) #return search_results["answer"] if it exists, otherwise return the whole search_results as a string for debugging
 
-    return [find_information, internet_search]
+    return [internet_search, find_information]
 
 
 

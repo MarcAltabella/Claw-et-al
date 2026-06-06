@@ -26,7 +26,13 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
     if user_query is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    prompt = f"Find information for: {user_input.content}"
+    prompt = f"""
+    Answer this user request: {user_input.content}
+
+    First, use find_information to retrieve relevant information from the user's uploaded documents.
+    Then, if current external information is needed, use internet_search.
+    Finally, combine both sources into a concise answer.
+    """
 
     tools = create_tools(user_id=current_user.user_id, db=db)
     agent = create_agent(tools=tools)
@@ -40,9 +46,26 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
         ]
     })
 
-    print(response)
+    print(f"Response: {response}")
 
-    response_message = response["messages"][-1].content[0]["text"]
+    last_content = response["messages"][-1].content
+
+    print("last_content:", type(last_content), last_content)
+
+    if isinstance(last_content, str):
+        response_message = last_content
+
+    elif isinstance(last_content, list) and last_content:
+        text_blocks = [
+            block.get("text", "")
+            for block in last_content
+            if isinstance(block, dict) and block.get("type") == "text"
+        ]
+        response_message = "\n\n".join(text_blocks)
+
+
+    else:
+        response_message = str(last_content)
 
     message = models.Message(
         id = uuid4(),
