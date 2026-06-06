@@ -12,12 +12,13 @@ from ..tools import create_tools
 
 
 router = APIRouter(
-    tags=["user"]
+    tags=["messages"],
+    prefix="/messages"
 )
 
 # User messages
 
-@router.post("/messages", status_code=status.HTTP_200_OK)
+@router.post("/send_message", status_code=status.HTTP_200_OK)
 def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
  
     # Retrieve the user from the database using the user_id from the token
@@ -41,7 +42,7 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
         "messages": [
             {
                 "role": "user",
-                "content": prompt,
+                "content": prompt
             }
         ]
     })
@@ -69,4 +70,24 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
         "message": response_message,
         "reasoning": reasoning,
         "sources": sources
+    }
+
+
+@router.get("/{message_id}", status_code=status.HTTP_200_OK)
+def get_messages(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+
+    messages_query = db.query(models.Message).filter(models.Message.user_id == current_user.user_id).all()
+
+    if not messages_query:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    
+    return {
+        "Message": [
+            {
+                "message_id": message.id,
+                "user_id": message.id,
+                "content": message.content
+            }
+            for message in messages_query
+        ]
     }
