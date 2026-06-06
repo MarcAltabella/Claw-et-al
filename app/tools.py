@@ -2,8 +2,10 @@ from langchain.tools import tool
 from sqlalchemy.orm import Session
 from . import models
 from .rag.pipeline import input_embedding
+from tavily import TavilyClient
+import os
 
-
+tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
 def create_tools(user_id: str, db: Session):
 
@@ -28,12 +30,25 @@ def create_tools(user_id: str, db: Session):
             return "No relevant information found for the query."
 
 
-        for chunk in results:
-            "\n\n".join(chunk.content)# extract the content of each chunk
-        
-        print(chunk.content) # debugging
-        return chunk.content
+        return "\n\n".join([chunk.content for chunk in results])
+    
 
-    return [find_information]
+    @tool
+    def internet_search(content: str,
+                        max_results: int = 5,
+                        include_raw_content: bool = False) -> str:
+        
+        """Search the internet for relevant information according to the user's query."""
+
+        search_results = tavily_client.search(query=content, 
+                                              num_results=max_results, 
+                                              include_raw_content=include_raw_content)
+        
+        print(search_results) # debugging
+
+        return search_results["answer"]
+
+    return [find_information, internet_search]
+
 
 
