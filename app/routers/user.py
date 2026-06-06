@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from uuid import UUID
-from uuid_utils import uuid4
+from uuid import uuid4
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from ..agent import agent
+from ..agent import create_agent
 from ..oauth2 import get_current_user
 from ..schemas import UserInput
 from .. import models
+from ..tools import create_tools
 
 
 
@@ -26,15 +26,23 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
     if user_query is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    prompt = f"Find information for: {user_input.content} with user id: {current_user.user_id}"
+    prompt = f"Find information for: {user_input.content}"
 
-    response_message = agent.invoke({
+    tools = create_tools(user_id=current_user.user_id, db=db)
+    agent = create_agent(tools=tools)
+
+    response = agent.invoke({
         "messages": [
-            {   "role": "user",
-                "content": prompt
+            {
+                "role": "user",
+                "content": prompt,
             }
         ]
     })
+
+    print(response)
+
+    response_message = response["messages"][-1].content[0]["text"]
 
     message = models.Message(
         id = uuid4(),
@@ -42,7 +50,10 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
         content = response_message
     )
 
+    print(response_message) # debugging
+    
     db.add(message)
     db.commit()
     db.refresh(message)
+
     return response_message

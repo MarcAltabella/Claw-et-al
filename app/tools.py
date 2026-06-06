@@ -1,29 +1,39 @@
 from langchain.tools import tool
-from .schemas import UserInput
-from app.database import get_db
-from fastapi import Depends
+from sqlalchemy.orm import Session
 from . import models
+from .rag.pipeline import input_embedding
 
 
 
+def create_tools(user_id: str, db: Session):
 
-@tool(args_schema=UserInput)
-def find_information(content: str) -> str:
+    @tool
+    def find_information(content: str) -> str:
 
-    """
-    Search for information in the database based on a user query.
-    """
+        """Search the current user's uploaded document chunks for relevant information."""
 
-    db = get_db()
 
-    try:
+        query_embed = input_embedding(content) # convert input to vector 
 
-        rows = db.query(models.Documents).filter(models.Documents.user_id == user_id).all()
+        results = (
+            db.query(models.DocumentChunks)
+            .join(models.Document, models.Document.id == models.DocumentChunks.document_id)
+            .filter(models.Document.user_id == user_id)
+            .order_by(models.DocumentChunks.embedding.cosine_distance(query_embed)) # perform cosine similarity with the content imput
+            .limit(5) # return the top 5 results
+            .all()
+        )
 
-        if rows is None:
-            return "No information found for the user."
+        if not results:
+            return "No relevant information found for the query."
+
+
+        for chunk in results:
+            "\n\n".join(chunk.content)# extract the content of each chunk
         
-    finally:
-        db.close()
-    
-    return f"Found information for query: {content}"
+        print(chunk.content) # debugging
+        return chunk.content
+
+    return [find_information]
+
+

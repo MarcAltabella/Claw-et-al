@@ -56,3 +56,16 @@ def embedding(chunk: Document) -> List[float]:
     vector = embeddings.embed_query(text) # Crete the embeddings for each chunk
     
     return vector # return the embedding for the chunk
+
+
+def input_embedding(prompt: str) -> List[float]:
+
+    embeddings = OpenAIEmbeddings(
+        model="text-embedding-3-large",
+        dimensions=1536,
+        chunk_size=200
+        ) # embeddings model
+
+    vector = embeddings.embed_query(prompt) # Crete the embeddings for the user input
+    
+    return vector # return the embedding for the user input
