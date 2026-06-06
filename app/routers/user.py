@@ -35,7 +35,7 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
     """
 
     tools = create_tools(user_id=current_user.user_id, db=db)
-    agent = create_agent(tools=tools)
+    agent = create_agent(tools=tools, user_id=current_user.user_id)
 
     response = agent.invoke({
         "messages": [
@@ -46,8 +46,6 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
         ]
     })
 
-    print(f"Response: {response}")
-
     last_content = response["messages"][-1].content
 
     print("last_content:", type(last_content), last_content)
@@ -55,14 +53,13 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
     if isinstance(last_content, str):
         response_message = last_content
 
-    elif isinstance(last_content, list) and last_content:
+    elif isinstance(last_content, list):
         text_blocks = [
             block.get("text", "")
             for block in last_content
             if isinstance(block, dict) and block.get("type") == "text"
         ]
         response_message = "\n\n".join(text_blocks)
-
 
     else:
         response_message = str(last_content)
