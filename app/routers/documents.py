@@ -1,5 +1,3 @@
-import os
-
 from uuid import uuid4
 from fastapi import HTTPException, status, Depends, APIRouter, UploadFile, File
 from sqlalchemy.orm import Session
@@ -14,6 +12,7 @@ router = APIRouter(
     prefix="/documents"
 )
 
+# INGEST DOCUMENTS INTO THE DATABASE
 @router.post("/ingest", status_code=status.HTTP_200_OK)
 def ingest_documents(file: UploadFile = File(...), # this field is required (...), file path
                      db: Session = Depends(get_db), 
@@ -80,6 +79,7 @@ def ingest_documents(file: UploadFile = File(...), # this field is required (...
     }
 
 
+# GET INFORMATION OF ALL DOCUMENTS FROM A USER
 @router.get("/", status_code=status.HTTP_200_OK)
 def get_documents(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
@@ -100,7 +100,7 @@ def get_documents(db: Session = Depends(get_db), current_user = Depends(get_curr
         ]
     }
 
-# Get document chunks for a document
+# GET INFORMATION FOR A DOCUMENT
 @router.get("/{document_id}", status_code=status.HTTP_200_OK)
 def get_document_ind(document_id: str, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
@@ -131,7 +131,7 @@ def get_document_ind(document_id: str, db: Session = Depends(get_db), current_us
         ]
     }
 
-
+# DELETE DOCUMENT
 @router.delete("/{document_id}", status_code=status.HTTP_200_OK)
 def delete_document(document_id: str, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 

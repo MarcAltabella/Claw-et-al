@@ -20,6 +20,18 @@ class User(Base):
     messages = relationship("Message", cascade="all, delete", backref="user")
 
 
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    input_message = Column(Text, nullable=False)
+    model = Column(String, nullable=False)
+    content = Column(String, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+
+
 class Document(Base):
     __tablename__ = "documents"
 
@@ -46,12 +58,13 @@ class DocumentChunks(Base):
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
 
-class Message(Base):
-    __tablename__ = "messages"
-
+class Knowledge(Base):
+    __tablename__ = "knowledge"
+    
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    input_message = Column(Text, nullable=False)
-    model = Column(String, nullable=False)
-    content = Column(String, nullable=False)
+    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    chunk_idx = Column(Integer, nullable=False)
+    embedding = Column(Vector(1536), nullable=False)
+    raw_text = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))

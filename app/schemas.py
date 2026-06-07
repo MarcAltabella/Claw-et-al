@@ -30,3 +30,9 @@ class AgentResponse(BaseModel):
     response: str = Field(description="The agent's response to the user's query.")
     reasoning: str = Field(description="The agent's reasoning process, including which tools were used and how the final answer was derived.")
     sources: list[str] = Field(description="A list of sources or references used by the agent to generate the response, if applicable.")
+
+
+###### DOCUMENT SCHEMAS ######
+
+class KnowlegeLoad(BaseModel):
+    documents_path: str
