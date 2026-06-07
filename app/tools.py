@@ -5,17 +5,35 @@ from .rag.pipeline import input_embedding
 from tavily import TavilyClient
 import os
 from exa_py import Exa
+from typing import Any
 
 tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 exa = Exa(api_key=os.getenv("EXA_API_KEY"))
+
+
+def _format_exa_result(result: Any) -> str:
+    title = getattr(result, "title", None) or "Untitled result"
+    url = getattr(result, "url", None) or "No URL"
+    text = getattr(result, "text", None) or getattr(result, "summary", None) or ""
+    snippet = text.strip()
+    if len(snippet) > 900:
+        snippet = f"{snippet[:900].rstrip()}..."
+
+    return f"Title: {title}\nURL: {url}\nSnippet: {snippet}".strip()
 
 def create_tools(user_id: str, db: Session):
 
     @tool
     def find_information(content: str) -> str:
 
-        """Search the current user's uploaded document chunks for relevant information."""
+        """
+        Search the current user's uploaded document chunks.
 
+        Use this when the user asks about their own uploaded files, wants evidence from
+        documents, or when the curated knowledge base is not enough. The input should be
+        a focused semantic search query. The output contains the top matching chunks and
+        should be cited as uploaded document evidence when used.
+        """
 
         query_embed = input_embedding(content) # convert input to vector 
 
@@ -31,31 +49,81 @@ def create_tools(user_id: str, db: Session):
         if not results:
             return "No relevant information found for the query."
 
-
-        return "\n\n".join([chunk.content for chunk in results])
+        return "\n\n".join(
+            [
+                (
+                    f"Uploaded document chunk {idx}\n"
+                    f"Document ID: {chunk.document_id}\n"
+                    f"Chunk index: {chunk.chunk_idx}\n"
+                    f"Content: {chunk.content}"
+                )
+                for idx, chunk in enumerate(results, start=1)
+            ]
+        )
     
 
     @tool
     def internet_search(content: str, max_results: int = 5) -> str:
         
-        """Search the internet for relevant information according to the user's query. Return the reasoning process, sources (links), and final answer."""
+        """
+        Search trusted external research sources on the internet.
+
+        Use this only when local sources are missing, stale, or insufficient for the
+        user's research question. Prefer precise queries with paper names, methods,
+        datasets, or benchmark names. Return facts only when supported by the returned
+        URLs, and include those URLs in the final sources list.
+        """
 
         search_results = exa.search(
             query=content,  
             include_domains=["arxiv.org", "figshare.com", "lightning.ai"],
-            type="deep-lite"
+            type="deep-lite",
+            num_results=max_results,
         )
         print(f"search_results: {search_results}") # debugging
         
-        return search_results
+        results = getattr(search_results, "results", None) or []
+
+        if not results:
+            return "No external search results found for the query."
+
+        return "\n\n".join(_format_exa_result(result) for result in results)
 
     @tool
     def knowledge_search(content: str)->str:
+        """
+        Search the curated knowledge base.
+
+        Always use this first for research questions. Treat it as the primary source for
+        stable background knowledge, internal research notes, and previously indexed
+        material. If the result is empty or incomplete, use find_information or
+        internet_search as needed.
+        """
         
         query_embed = input_embedding(content)
 
         results = (
             db.query(models.Knowledge)
-            .filter(models.Knowledge)
+            .filter(models.Knowledge.user_id == user_id)
+            .order_by(models.Knowledge.embedding.cosine_distance(query_embed))
+            .limit(10)
+            .all()
         )
-    return [internet_search, find_information]
+
+        if not results:
+            return "No relevant curated knowledge found for the query."
+
+        return "\n\n".join(
+            [
+                (
+                    f"Knowledge chunk {idx}\n"
+                    f"Document ID: {chunk.document_id}\n"
+                    f"Chunk index: {chunk.chunk_idx}\n"
+                    f"Content: {chunk.raw_text or ''}"
+                )
+                for idx, chunk in enumerate(results, start=1)
+            ]
+        )
+
+
+    return [internet_search, find_information, knowledge_search]
