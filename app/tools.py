@@ -49,6 +49,13 @@ def create_tools(user_id: str, db: Session):
         
         return search_results
 
+    @tool
+    def knowledge_search(content: str)->str:
+        
+        query_embed = input_embedding(content)
+
+        results = (
+            db.query(models.Knowledge)
+            .filter(models.Knowledge)
+        )
     return [internet_search, find_information]
-
-

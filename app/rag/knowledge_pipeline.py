@@ -10,7 +10,7 @@ from . import pipeline
 EXPORT_TYPE = ExportType.DOC_CHUNKS
 
 
-def knowledge_load(path: Path) -> list[tuple[Path, List[Document]]]:
+def knowledge_load(path: Path) -> List[tuple[Path, List[Document]]]:
     
     loaded_files = []
 
@@ -33,13 +33,11 @@ def knowledge_load(path: Path) -> list[tuple[Path, List[Document]]]:
     return loaded_files
 
 
-def knowledge_vectors(docs_chunks: List[Document]) -> List[List[float]]:
+def knowledge_vectors_chunks(chunks: List[Document]) -> List[List[float]]:
+    
+    chunk_vectors = []
 
-    docs_chunks_vectors = []
+    for chunk in chunks:
+        chunk_vectors.append(pipeline.embedding(chunk))
 
-    for doc_chunk in docs_chunks:
-        doc_embedding = pipeline.embedding(doc_chunk)
-
-        docs_chunks_vectors.append(doc_embedding)
-
-    return docs_chunks_vectors
+    return chunk_vectors

@@ -22,10 +22,12 @@ def feed_knowledge(documents_path: schemas.KnowlegeLoad,
 
     docs_dir = Path(documents_path.documents_path)
     
-    docs_loaded = knowledge_pipeline.knowledge_load(docs_dir) # Chunks included
+    docs_loaded = knowledge_pipeline.knowledge_load(docs_dir) # (pdf_path, [chunk_1, chunk_2, chunk_3])
+
+    response_documents = []
 
     for pdf_path, chunks in docs_loaded:
-
+        
         document = models.Document(
             id = uuid4(),
             user_id = current_user.user_id,
@@ -38,37 +40,36 @@ def feed_knowledge(documents_path: schemas.KnowlegeLoad,
         db.commit()
         db.refresh(document)
 
-    docs_vectors = knowledge_pipeline.knowledge_vectors(docs_loaded)
+        chunk_vectors = knowledge_pipeline.knowledge_vectors_chunks(chunks)
 
-    chunk_rows = [
-        models.Knowledge(
-            id = uuid4(),
-            user_id = current_user.user_id,
-            document_id = document.id,
-            chunk_idx = i,
-            embedding = docs_vectors[i],
-            raw_text = chunk.page_content
-        )
-    for i, chunk in enumerate(docs_loaded)
-]   
+        chunk_rows = [
+            models.Knowledge(
+                id = uuid4(),
+                user_id = current_user.user_id,
+                document_id = document.id,
+                chunk_idx = i,
+                embedding = chunk_vectors[i],
+                raw_text = chunk.page_content
+            )
+            for i, chunk in enumerate(chunks)
+        ]   
 
-    print(chunk_rows[0]) # debugging
+        print(chunk_rows[0]) # debugging
 
-    db.add_all(chunk_rows)
-    document.processed = True
-    db.commit()
-
-
-    return {
-        "Documents": [
-            {
-                "document_id": document.id,
-                "chunks": len(chunk_rows),
-                "processed": True,
-            }
-            for i, loaded_doc in enumerate(docs_loaded)
-        ]
-    }
+        db.add_all(chunk_rows)
+        document.processed = True
+        db.commit()
+        
+        response_documents.append(
+                {
+                    "document_id": document.id,
+                    "pdf_path_name": pdf_path.name,
+                    "chunks": len(chunk_rows),
+                    "processed": True,
+                }
+            )
+        
+    return {"Documents": response_documents}
     
     
 
