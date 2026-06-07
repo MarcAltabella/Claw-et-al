@@ -3,7 +3,7 @@ from uuid import uuid4
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from ..agent import create_agent
+from ..agent import AGENT_MODEL, create_agent
 from ..oauth2 import get_current_user
 from ..schemas import UserInput
 from .. import models
@@ -57,6 +57,8 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
     message = models.Message(
         id = uuid4(),
         user_id = current_user.user_id,
+        input_message = user_input.content,
+        model = AGENT_MODEL,
         content = response_message
     )
 
@@ -71,9 +73,10 @@ def read_users_me(user_input: UserInput, db: Session = Depends(get_db), current_
         "reasoning": reasoning,
         "sources": sources
     }
+    
 
-
-@router.get("/{message_id}", status_code=status.HTTP_200_OK)
+# get all messages from a user
+@router.get("/{user_id}", status_code=status.HTTP_200_OK)
 def get_messages(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     messages_query = db.query(models.Message).filter(models.Message.user_id == current_user.user_id).all()
@@ -86,6 +89,7 @@ def get_messages(db: Session = Depends(get_db), current_user = Depends(get_curre
             {
                 "message_id": message.id,
                 "user_id": message.id,
+                "model": message.model,
                 "content": message.content
             }
             for message in messages_query

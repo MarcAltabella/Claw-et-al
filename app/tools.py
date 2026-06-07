@@ -4,8 +4,10 @@ from . import models
 from .rag.pipeline import input_embedding
 from tavily import TavilyClient
 import os
+from exa_py import Exa
 
 tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+exa = Exa(api_key=os.getenv("EXA_API_KEY"))
 
 def create_tools(user_id: str, db: Session):
 
@@ -38,18 +40,15 @@ def create_tools(user_id: str, db: Session):
         
         """Search the internet for relevant information according to the user's query. Return the reasoning process, sources (links), and final answer."""
 
-        search_results = tavily_client.search(
-            query=content,
-            max_results=max_results,
-            include_answer=True,
-            include_raw_content=False,
-            search_depth="basic",
+        search_results = exa.search(
+            query=content,  
+            include_domains=["arxiv.org", "figshare.com", "lightning.ai"],
+            type="deep-lite"
         )
         print(f"search_results: {search_results}") # debugging
-
+        
         return search_results
 
     return [internet_search, find_information]
-
 
 
