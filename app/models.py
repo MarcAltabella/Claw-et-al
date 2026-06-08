@@ -65,6 +65,6 @@ class Knowledge(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
     chunk_idx = Column(Integer, nullable=False)
-    embedding = Column(Vector(1536), nullable=False)
+    embedding = Column(Vector(384), nullable=False)
     raw_text = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
