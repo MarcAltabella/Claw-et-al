@@ -21,18 +21,14 @@ def feed_knowledge(documents_path: schemas.KnowlegeLoad,
                    current_user = Depends(get_current_user)):
 
     docs_dir = Path(documents_path.documents_path)
-    
     docs_parsed = knowledge_pipeline.knowledge_parse(docs_dir)
-    
 
     response_documents = []
 
-    for document in docs_parsed:
+    for pdf_path, parsed_text in docs_parsed:
 
-        chunks_list = knowledge_pipeline.knowledge_splitter(doc_parsed=document)
-
-        ## TO-DO EMBEDDINGS
-    
+        chunks_list = knowledge_pipeline.knowledge_splitter(doc_parsed=parsed_text)
+        chunks_embedded = knowledge_pipeline.knowledge_embedding(chunks_list)
 
 
         document = models.Document(
