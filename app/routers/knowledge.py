@@ -22,12 +22,19 @@ def feed_knowledge(documents_path: schemas.KnowlegeLoad,
 
     docs_dir = Path(documents_path.documents_path)
     
-    docs_loaded = knowledge_pipeline.knowledge_load(docs_dir) # (pdf_path, [chunk_1, chunk_2, chunk_3])
+    docs_parsed = knowledge_pipeline.knowledge_parse(docs_dir)
+    
 
     response_documents = []
 
-    for pdf_path, chunks in docs_loaded:
-        
+    for document in docs_parsed:
+
+        chunks_list = knowledge_pipeline.knowledge_splitter(doc_parsed=document)
+
+        ## TO-DO EMBEDDINGS
+    
+
+
         document = models.Document(
             id = uuid4(),
             user_id = current_user.user_id,
