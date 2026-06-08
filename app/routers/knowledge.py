@@ -6,6 +6,7 @@ from .. import models, schemas
 from ..database import get_db
 from ..rag import knowledge_pipeline
 from pathlib import Path
+from tqdm import tqdm
 
 
 
@@ -25,7 +26,7 @@ def feed_knowledge(documents_path: schemas.KnowlegeLoad,
 
     response_documents = []
 
-    for pdf_path, parsed_text in docs_parsed:
+    for pdf_path, parsed_text in tqdm(docs_parsed):
 
         chunks_list = knowledge_pipeline.knowledge_splitter(parsed_text)
         chunks_embedded = knowledge_pipeline.knowledge_embedding(chunks_list)
@@ -40,6 +41,8 @@ def feed_knowledge(documents_path: schemas.KnowlegeLoad,
 
         db.add(document)
         db.flush()
+
+        print(f"Processed {pdf_path}")
 
         chunk_rows = [
             models.Knowledge(

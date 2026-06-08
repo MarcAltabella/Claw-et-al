@@ -4,23 +4,30 @@ import pymupdf4llm
 from langchain_text_splitters import MarkdownTextSplitter
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from langchain_core.documents import Document
+from concurrent.futures import ProcessPoolExecutor
 
 
+
+
+def parse_single_pdf(pdf_path: Path) -> tuple[Path, str]:
+    file_md = pymupdf4llm.to_markdown(pdf_path)
+    return pdf_path, file_md
 
 def knowledge_parse(path: Path) -> List[tuple[Path, str]]:
     
-    parsed_files = []
+    pdf_paths = list(path.glob("*.pdf"))
 
-    # Parse all pdf's to .md
-    for pdf_path in path.glob("*.pdf"):
+    results = []
+
+    with ProcessPoolExecutor(max_workers=4) as executor:
         
-        print(pdf_path) #debugging
+        parsed_files = executor.map(parse_single_pdf, pdf_paths) # Create a list with maps (fn, iterables)
 
-        file_md = pymupdf4llm.to_markdown(pdf_path)
+    for parsed_file in parsed_files:
+        results.append(parsed_file)
 
-        parsed_files.append((pdf_path, file_md))
+        return results
 
-    return parsed_files
 
 
 def knowledge_splitter(doc_parsed: str) -> List[Document]:
@@ -53,13 +60,3 @@ def knowledge_embedding(chunks: List[Document])->List[List[float]]:
         
     chunks_embedded = model.embed_documents(texts) # List[str]
     return chunks_embedded
-
-
-def knowledge_vectors_chunks(chunks: List[Document]) -> List[List[float]]:
-    
-    chunk_vectors = []
-
-    for chunk in chunks:
-        chunk_vectors.append(pipeline.embedding(chunk))
-
-    return chunk_vectors

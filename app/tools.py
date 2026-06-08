@@ -7,19 +7,7 @@ import os
 from exa_py import Exa
 from typing import Any
 
-tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 exa = Exa(api_key=os.getenv("EXA_API_KEY"))
-
-
-def _format_exa_result(result: Any) -> str:
-    title = getattr(result, "title", None) or "Untitled result"
-    url = getattr(result, "url", None) or "No URL"
-    text = getattr(result, "text", None) or getattr(result, "summary", None) or ""
-    snippet = text.strip()
-    if len(snippet) > 900:
-        snippet = f"{snippet[:900].rstrip()}..."
-
-    return f"Title: {title}\nURL: {url}\nSnippet: {snippet}".strip()
 
 def create_tools(user_id: str, db: Session):
 
@@ -49,18 +37,17 @@ def create_tools(user_id: str, db: Session):
         if not results:
             return "No relevant information found for the query."
 
-        return "\n\n".join(
-            [
+        return {
+            "Results": [
                 (
                     f"Uploaded document chunk {idx}\n"
                     f"Document ID: {chunk.document_id}\n"
                     f"Chunk index: {chunk.chunk_idx}\n"
                     f"Content: {chunk.content}"
                 )
-                for idx, chunk in enumerate(results, start=1)
+                for idx, chunk in enumerate(results)
             ]
-        )
-    
+        }
 
     @tool
     def internet_search(content: str, max_results: int = 5) -> str:
@@ -87,7 +74,7 @@ def create_tools(user_id: str, db: Session):
         if not results:
             return "No external search results found for the query."
 
-        return "\n\n".join(_format_exa_result(result) for result in results)
+        return results
 
     @tool
     def knowledge_search(content: str)->str:
@@ -113,8 +100,8 @@ def create_tools(user_id: str, db: Session):
         if not results:
             return "No relevant curated knowledge found for the query."
 
-        return "\n\n".join(
-            [
+        return{
+            "Results": [
                 (
                     f"Knowledge chunk {idx}\n"
                     f"Document ID: {chunk.document_id}\n"
@@ -123,7 +110,6 @@ def create_tools(user_id: str, db: Session):
                 )
                 for idx, chunk in enumerate(results, start=1)
             ]
-        )
-
+        }
 
     return [internet_search, find_information, knowledge_search]
