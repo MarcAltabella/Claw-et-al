@@ -27,9 +27,8 @@ def feed_knowledge(documents_path: schemas.KnowlegeLoad,
 
     for pdf_path, parsed_text in docs_parsed:
 
-        chunks_list = knowledge_pipeline.knowledge_splitter(doc_parsed=parsed_text)
+        chunks_list = knowledge_pipeline.knowledge_splitter(parsed_text)
         chunks_embedded = knowledge_pipeline.knowledge_embedding(chunks_list)
-
 
         document = models.Document(
             id = uuid4(),
@@ -40,10 +39,7 @@ def feed_knowledge(documents_path: schemas.KnowlegeLoad,
         )
 
         db.add(document)
-        db.commit()
-        db.refresh(document)
-
-        chunk_vectors = knowledge_pipeline.knowledge_vectors_chunks(chunks)
+        db.flush()
 
         chunk_rows = [
             models.Knowledge(
@@ -51,13 +47,11 @@ def feed_knowledge(documents_path: schemas.KnowlegeLoad,
                 user_id = current_user.user_id,
                 document_id = document.id,
                 chunk_idx = i,
-                embedding = chunk_vectors[i],
+                embedding = chunks_embedded[i],
                 raw_text = chunk.page_content
             )
-            for i, chunk in enumerate(chunks)
-        ]   
-
-        print(chunk_rows[0]) # debugging
+            for i, chunk in enumerate(chunks_list)
+        ]
 
         db.add_all(chunk_rows)
         document.processed = True

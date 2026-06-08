@@ -3,10 +3,8 @@ from typing import List
 import pymupdf4llm
 from langchain_text_splitters import MarkdownTextSplitter
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
-
 from langchain_core.documents import Document
 
-from . import pipeline
 
 
 def knowledge_parse(path: Path) -> List[tuple[Path, str]]:
