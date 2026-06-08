@@ -2,10 +2,8 @@ from langchain.tools import tool
 from sqlalchemy.orm import Session
 from . import models
 from .rag.pipeline import input_embedding
-from tavily import TavilyClient
 import os
 from exa_py import Exa
-from typing import Any
 
 exa = Exa(api_key=os.getenv("EXA_API_KEY"))
 
