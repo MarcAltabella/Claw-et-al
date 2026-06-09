@@ -29,6 +29,5 @@
 - Called when local retrieval is not enough.
 - Restricted to research-oriented sources such as arXiv, Figshare, and Lightning AI.
 
-## Note
-
+> [!NOTE]  
 > *Built by hand in a short period during exams. Some production upgrades were intentionally left out, such as stronger parsing, larger embeddings, and more advanced agent workflows.*
